@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <float.h>
 #include <math.h>
+#include "LED_and_ADC.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,6 +55,7 @@ float angleGyro= 0.0f;
 float angleAcc= 0.0f;
 float angleX= 0.0f;
 float SumAngleGyro= 0.0f;
+float voltage=0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -129,27 +131,39 @@ int main(void)
   HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, 1);
 
 
-  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 0);
-  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 0);
-  HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, 0);
+  //HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 0);
+  //HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+  //HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 0);
+  //HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, 0);
 
   HAL_TIM_Base_Start_IT(&htim7);
 
 
   //HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+  //LED_ADC_Init();
 
-
-
+  voltage = getBatteryVoltage();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  uint32_t last_ms = HAL_GetTick();
   while (1)
   {
-	  //mpu_getAccData();
-	  //HAL_Delay(50);
 
+
+
+	  uint32_t now = HAL_GetTick();
+	  //printf("x= %d\n",now);
+	  if(now - last_ms > 5000){
+		  HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+		  voltage = getBatteryVoltage();
+
+
+		  last_ms=now;
+
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

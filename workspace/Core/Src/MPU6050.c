@@ -12,6 +12,7 @@ void MPU6050_Init(){				//restart i2c
 	mpu_write(0x6B,0b00000000);	//uspienie na 0,
 	mpu_write(0x1B,0b00000000);	// konfiguracja zyroskopu / max 200 stopni na sekunde
 	mpu_write(0x1C,0b00001000);	//konfiguracja akcelerometru / 4g
+	HAL_GPIO_TogglePin(LED4_GPIO_Port, LED4_Pin);
 }
 
 
@@ -56,7 +57,7 @@ int16_t mpu_getGyroData(){		//pobierz dane z żyroskopu
 	HAL_StatusTypeDef ret = HAL_I2C_Mem_Read(&hi2c1, MPU6050_ADDR,MPU6050_GYRO , 1, data, 2, 1);
 	if(ret==HAL_OK){
 		x_gyro = ((int16_t)data[0]<<8) + data[1];
-		printf("x axis gyro %d\n",x_gyro);
+		//printf("x axis gyro %d\n",x_gyro);
 	return x_gyro;
 	}else{
 		MPU6050_Init();
@@ -71,7 +72,7 @@ int16_t mpu_getAccData(){		//pobierz dane z akcelerometru
 	HAL_StatusTypeDef ret = HAL_I2C_Mem_Read(&hi2c1, MPU6050_ADDR,MPU6050_ACC , 1, data, 2, 1);
 	if(ret==HAL_OK){
 		x_acc = ((int16_t)data[0]<<8) + data[1];
-		printf("x axis acc %d\n",x_acc);
+		//printf("x axis acc %d\n",x_acc);
 	return x_acc;
 	}else{
 		MPU6050_Init();
