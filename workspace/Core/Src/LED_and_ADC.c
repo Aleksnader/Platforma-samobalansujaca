@@ -17,7 +17,7 @@ void LED_ADC_Init(){
 }
 float getBatteryVoltage(){
 	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+	HAL_ADC_PollForConversion(&hadc1, 1);
 
 	uint32_t value = HAL_ADC_GetValue(&hadc1);
 	float voltage = (3.3f * value/ 4096.0f)*6;

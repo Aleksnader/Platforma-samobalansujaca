@@ -30,6 +30,7 @@
 #include <float.h>
 #include <math.h>
 #include "LED_and_ADC.h"
+#include "UART_ESP.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,19 +57,45 @@ float angleAcc= 0.0f;
 float angleX= 0.0f;
 float SumAngleGyro= 0.0f;
 float voltage=0;
+float motorFrequency=0.0f;
+//uint8_t Received[8];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
+
+float error; // błąd regulacji
+float integral = 0; // całka błędu
+float derivative; // pochodna błędu
+float lastError = 0; // ostatni błąd
+float updatePID(float angle,float setpoint, float kp, float ki, float kd)
+{
+
+  // obliczenie błędu regulacji
+  error = setpoint - angle;
+
+  // obliczenie całki błędu
+  integral = integral + error;
+
+  // obliczenie pochodnej błędu
+  derivative = error - lastError;
+
+  // zapamiętanie ostatniego błędu
+  lastError = error;
+
+  // obliczenie wyjścia kontrolera
+  return kp*error + ki*integral + kd*derivative;
+
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  if (htim == &htim7) {
+  if (htim == &htim7) {			//przerwanie pomiarow i regulatora pid 100hz
 	  //HAL_GPIO_TogglePin(LED4_GPIO_Port, LED4_Pin);
 	  gyroData = mpu_getGyroData();
 	  accData = mpu_getAccData();
@@ -79,6 +106,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	  SumAngleGyro=(gyroData+93)*0.01*0.0076+angleX;
 	  angleX = 0.98f * SumAngleGyro+ (1- 0.98f) * angleAcc;
+
+	  motorFrequency = updatePID(angleX, -3.4f, 1.0f,0.1f,1.0f);
 
   }
 }
@@ -143,6 +172,10 @@ int main(void)
   //LED_ADC_Init();
 
   voltage = getBatteryVoltage();
+
+
+
+  HAL_UART_Receive_IT(&huart1, Received, 6);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -153,9 +186,9 @@ int main(void)
   {
 
 
-
+/*
 	  uint32_t now = HAL_GetTick();
-	  //printf("x= %d\n",now);
+	  printf("x= %d\n",now);
 	  if(now - last_ms > 5000){
 		  HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 		  voltage = getBatteryVoltage();
@@ -163,7 +196,7 @@ int main(void)
 
 		  last_ms=now;
 
-	  }
+	  }*/
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
