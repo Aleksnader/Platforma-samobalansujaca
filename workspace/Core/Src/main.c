@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <float.h>
 #include <math.h>
+#include <string.h>
 #include "LED_and_ADC.h"
 #include "UART_ESP.h"
 /* USER CODE END Includes */
@@ -107,7 +108,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  SumAngleGyro=(gyroData+93)*0.01*0.0076+angleX;
 	  angleX = 0.98f * SumAngleGyro+ (1- 0.98f) * angleAcc;
 
-	  motorFrequency = updatePID(angleX, -3.4f, 1.0f,0.1f,1.0f);
+	  motorFrequency = updatePID(angleX, -3.4f, P ,I , D);
 
   }
 }
@@ -175,7 +176,7 @@ int main(void)
 
 
 
-  HAL_UART_Receive_IT(&huart1, Received, 6);
+  HAL_UART_Receive_IT(&huart1, Received, 26);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -186,9 +187,9 @@ int main(void)
   {
 
 
-/*
+
 	  uint32_t now = HAL_GetTick();
-	  printf("x= %d\n",now);
+	  //printf("x= %d\n",now);
 	  if(now - last_ms > 5000){
 		  HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 		  voltage = getBatteryVoltage();
@@ -196,7 +197,7 @@ int main(void)
 
 		  last_ms=now;
 
-	  }*/
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
