@@ -13,9 +13,9 @@ char chP[5];
 char chI[5];
 char chD[5];
 
-float  P;
-float  I;
-float  D;
+float  P=1.0f;
+float  I=0.0f;
+float  D=0.0f;
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {		//odbieranie danych
 

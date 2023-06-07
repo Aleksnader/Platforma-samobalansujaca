@@ -12,7 +12,7 @@ void MPU6050_Init(){				//restart i2c
 	mpu_write(0x6B,0b00000000);	//uspienie na 0,
 	mpu_write(0x1B,0b00000000);	// konfiguracja zyroskopu / max 200 stopni na sekunde
 	mpu_write(0x1C,0b00001000);	//konfiguracja akcelerometru / 4g
-	//HAL_GPIO_TogglePin(LED4_GPIO_Port, LED4_Pin);
+	HAL_GPIO_TogglePin(LED4_GPIO_Port, LED4_Pin);
 }
 
 
@@ -26,7 +26,7 @@ uint8_t mpu_read(uint8_t reg)		//odczytaj dane z pojedynczego rejestru
 			return value;
 		}else{
 			printf("nie udalo sie odczytac danych z rejestru 0x%02X\n",reg);
-			printf(reg);
+			//printf(reg);
 			MPU6050_Init();
 			return ret;
 		}
@@ -62,6 +62,7 @@ int16_t mpu_getGyroData(){		//pobierz dane z żyroskopu
 	}else{
 		MPU6050_Init();
 		//printf("nie udalo sie pobrac danych zyroskopu\r\n");
+		HAL_GPIO_TogglePin(LED4_GPIO_Port, LED4_Pin);
 		return 404;
 	}
 

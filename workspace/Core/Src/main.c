@@ -51,14 +51,15 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-int16_t gyroData;
-int16_t accData;
+int16_t gyroData=0;
+int16_t accData=0;
 float angleGyro= 0.0f;
 float angleAcc= 0.0f;
 float angleX= 0.0f;
 float SumAngleGyro= 0.0f;
 float voltage=0;
-float motorFrequency=0.0f;
+float motorRPM=0.0f;
+int stepTime = 0;
 //uint8_t Received[8];
 /* USER CODE END PV */
 
@@ -106,11 +107,44 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  angleAcc = (accData*0.0001204)*90;
 
 	  SumAngleGyro=(gyroData+93)*0.01*0.0076+angleX;
-	  angleX = 0.98f * SumAngleGyro+ (1- 0.98f) * angleAcc;
-
-	  motorFrequency = updatePID(angleX, -3.4f, P ,I , D);
+	  angleX = 0.99f * SumAngleGyro+ (1- 0.99f) * angleAcc;
+	  //if( fabs(angleX)> 90){
+		//  HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, 1);
+	  //}else{
+		//  HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, 0);
+	  //}
+	  motorRPM = updatePID(angleX, -5.0f, 4.5f ,1.0f , 1.0f);		//w miare dziala 4.5 0.5 2.0
 
   }
+  if (htim == &htim6) {
+
+  		  stepTime=stepTime+50000;			// czas miedzy krokami timera, powiekszone * 100
+
+  		  if(stepTime>=60000000000/(800*fabs(motorRPM))&& fabs(motorRPM)>0.0f){   // 800- kroki do pelnego obrotu * ilosc obrotow na minute - powiekszone *100
+
+  			  if(motorRPM>0){
+  				HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin, 1);
+  				HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, 1);
+  				HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 1);
+  			  }else{
+  				HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin, 0);
+  				HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, 0);
+  				HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 0);
+  			  }
+  			  //printf("predkosc: %s\n\r", predkosc);
+  			  HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin,1);
+  			  HAL_GPIO_WritePin(STP_GPIO_Port, STP_Pin,1);
+
+  			  HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin,0);
+  			  HAL_GPIO_WritePin(STP_GPIO_Port, STP_Pin,0);
+
+  			  HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+  			  //printf("krok");
+
+  	    stepTime=0;
+
+  		  }
+  	  }
 }
 /* USER CODE END 0 */
 
@@ -149,6 +183,7 @@ int main(void)
   MX_TIM6_Init();
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
+
   HAL_GPIO_WritePin(M0_GPIO_Port, M0_Pin, 0);
   HAL_GPIO_WritePin(M1_GPIO_Port, M1_Pin, 1);
   HAL_GPIO_WritePin(M2_GPIO_Port, M2_Pin, 0);
@@ -158,21 +193,25 @@ int main(void)
   HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin, 0);
   HAL_GPIO_WritePin(STP_GPIO_Port, STP_Pin, 0);
 
-  HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, 1);
+  HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, 0);
+
 
 
   //HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 0);
   //HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
   //HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 0);
   //HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, 0);
-
+  HAL_Delay(250);
+  MPU6050_Init();
+  HAL_Delay(250);
   HAL_TIM_Base_Start_IT(&htim7);
+  HAL_TIM_Base_Start_IT(&htim6);
 
 
   //HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
   //LED_ADC_Init();
 
-  voltage = getBatteryVoltage();
+  //voltage = getBatteryVoltage();
 
 
 
@@ -191,8 +230,8 @@ int main(void)
 	  uint32_t now = HAL_GetTick();
 	  //printf("x= %d\n",now);
 	  if(now - last_ms > 5000){
-		  HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-		  voltage = getBatteryVoltage();
+		  //HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+		 // voltage = getBatteryVoltage();
 
 
 		  last_ms=now;
