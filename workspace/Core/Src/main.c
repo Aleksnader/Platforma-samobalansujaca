@@ -79,10 +79,10 @@ float updatePID(float angle,float setpoint, float kp, float ki, float kd)
   error = setpoint - angle;
 
   // obliczenie całki błędu
-  integral = integral + error;
+  integral = integral + (error*0.01f);
 
   // obliczenie pochodnej błędu
-  derivative = error - lastError;
+  derivative = (error - lastError)*100;
 
   // zapamiętanie ostatniego błędu
   lastError = error;
@@ -106,39 +106,56 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	  angleAcc = (accData*0.0001204)*90;
 
-	  SumAngleGyro=(gyroData+93)*0.01*0.0076+angleX;
-	  angleX = 0.99f * SumAngleGyro+ (1- 0.99f) * angleAcc;
+	  SumAngleGyro=(gyroData-65)*0.01*0.0076+angleX;
+	  angleX = 0.999f * SumAngleGyro+ (1- 0.999f) * angleAcc;
 	  //if( fabs(angleX)> 90){
 		//  HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, 1);
 	  //}else{
 		//  HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, 0);
 	  //}
-	  motorRPM = updatePID(angleX, -5.0f, 4.5f ,1.0f , 1.0f);		//w miare dziala 4.5 0.5 2.0
+	  motorRPM = updatePID(angleX, -4.0f, 6.0f ,200.0f , 0.01f);		//w miare dziala 4.5 0.5 2.0
 
   }
   if (htim == &htim6) {
 
   		  stepTime=stepTime+50000;			// czas miedzy krokami timera, powiekszone * 100
 
-  		  if(stepTime>=60000000000/(800*fabs(motorRPM))&& fabs(motorRPM)>0.0f){   // 800- kroki do pelnego obrotu * ilosc obrotow na minute - powiekszone *100
+  		  if(stepTime>=60000000000.0f/(800.0f*fabs(motorRPM))&& fabs(motorRPM)>0.5f){   // 800- kroki do pelnego obrotu * ilosc obrotow na minute - powiekszone *100
 
   			  if(motorRPM>0){
-  				HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin, 1);
-  				HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, 1);
-  				HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 1);
+  				//HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin, 1);
+  				GPIOA->ODR |= (1<<8);
+  				//HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, 1);
+  				GPIOB->ODR |= (1<<0);
+  				//HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 1);
+  				GPIOA->ODR |= (1<<6);
   			  }else{
-  				HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin, 0);
-  				HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, 0);
-  				HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 0);
+  				//HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin, 0);
+  				//GPIOA->ODR |= (0<<8);
+  				GPIOA->ODR &= ~(1<<8);
+  				//HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, 0);
+  				//GPIOB->ODR |= (0<<0);
+  				GPIOB->ODR &= ~(1<<0);
+  				//HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 0);
+  				//GPIOA->ODR |= (0<<6);
+  				GPIOA->ODR &= ~(1<<6);
+
   			  }
   			  //printf("predkosc: %s\n\r", predkosc);
-  			  HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin,1);
-  			  HAL_GPIO_WritePin(STP_GPIO_Port, STP_Pin,1);
+  			  //HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin,1);
+  			  GPIOA->ODR |= (1<<12);
+  			  //HAL_GPIO_WritePin(STP_GPIO_Port, STP_Pin,1);
+  			  GPIOB->ODR |= (1<<6);
 
-  			  HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin,0);
-  			  HAL_GPIO_WritePin(STP_GPIO_Port, STP_Pin,0);
+  			  //HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin,0);
+  			  //GPIOA->ODR |= (0<<12);
+  			  GPIOA->ODR &= ~(1<<12);
+  			  //HAL_GPIO_WritePin(STP_GPIO_Port, STP_Pin,0);
+  			  //GPIOB->ODR |= (0<<6);
+  			  GPIOB->ODR &= ~(1<<6);
 
-  			  HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+  			  //HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+  			  //printf("krok\r\n");
   			  //printf("krok");
 
   	    stepTime=0;
@@ -187,7 +204,7 @@ int main(void)
   HAL_GPIO_WritePin(M0_GPIO_Port, M0_Pin, 0);
   HAL_GPIO_WritePin(M1_GPIO_Port, M1_Pin, 1);
   HAL_GPIO_WritePin(M2_GPIO_Port, M2_Pin, 0);
-  HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, 1);
+  HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, 0);
   HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin, 0);
 
   HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin, 0);
